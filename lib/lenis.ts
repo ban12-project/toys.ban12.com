@@ -1,5 +1,7 @@
 'use client'
 
+import './lenis.css'
+
 import { useEffect } from 'react'
 import Lenis from '@studio-freight/lenis'
 import { useStore } from '@/lib/store'
