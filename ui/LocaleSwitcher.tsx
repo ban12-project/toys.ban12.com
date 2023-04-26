@@ -38,8 +38,8 @@ export default function LocaleSwitcher({
           )}
           as="div"
         >
-          {i18n.locales.map((locale) => (
-            <Listbox.Option key={locale} value={locale} as={Fragment}>
+          {Object.values(i18n.locales).map((locale) => (
+            <Listbox.Option key={locale.lang} value={locale.lang} as={Fragment}>
               {({ active, selected }) => (
                 <Link
                   className={clsx(
@@ -47,9 +47,9 @@ export default function LocaleSwitcher({
                     selected && 'text-sky-500',
                     active && 'bg-slate-50 dark:bg-slate-600/30',
                   )}
-                  href={redirectedPathName(locale)}
+                  href={redirectedPathName(locale.lang)}
                 >
-                  {locale}
+                  {locale.label}
                 </Link>
               )}
             </Listbox.Option>

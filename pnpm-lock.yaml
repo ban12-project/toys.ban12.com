@@ -22,6 +22,9 @@ dependencies:
   gsap:
     specifier: ^3.11.5
     version: 3.11.5
+  intl-messageformat:
+    specifier: ^10.3.4
+    version: 10.3.4
   negotiator:
     specifier: ^0.6.3
     version: 0.6.3
@@ -1791,6 +1794,15 @@ packages:
 
   /intersection-observer@0.12.2:
     resolution: {integrity: sha512-7m1vEcPCxXYI8HqnL8CKI6siDyD+eIWSwgB3DZA+ZTogxk9I4CDnj4wilt9x/+/QbHI4YG5YZNmC6458/e9Ktg==}
+    dev: false
+
+  /intl-messageformat@10.3.4:
+    resolution: {integrity: sha512-/FxUIrlbPtuykSNX85CB5sp2FjLVeTmdD7TfRkVFPft2n4FgcSlAcilFytYiFAEmPHc+0PvpLCIPXeaGFzIvOg==}
+    dependencies:
+      '@formatjs/ecma402-abstract': 1.14.3
+      '@formatjs/fast-memoize': 2.0.1
+      '@formatjs/icu-messageformat-parser': 2.3.1
+      tslib: 2.5.0
     dev: false
 
   /is-arguments@1.1.1:

@@ -13,8 +13,8 @@ function getLocale(request: NextRequest): string | undefined {
 
   // Use negotiator and intl-localematcher to get best locale
   let languages = new Negotiator({ headers: negotiatorHeaders }).languages()
-  // @ts-ignore locales are readonly
-  const locales: string[] = i18n.locales
+  // locales are readonly
+  const locales: string[] = Object.keys(i18n.locales)
   return matchLocale(languages, locales, i18n.defaultLocale)
 }
 
@@ -33,7 +33,7 @@ export function middleware(request: NextRequest) {
   //   return
 
   // Check if there is any supported locale in the pathname
-  const pathnameIsMissingLocale = i18n.locales.every(
+  const pathnameIsMissingLocale = Object.keys(i18n.locales).every(
     (locale) => !pathname.startsWith(`/${locale}/`) && pathname !== `/${locale}`
   )
 
