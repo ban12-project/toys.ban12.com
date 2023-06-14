@@ -5,6 +5,8 @@ import { getSupportedDataTypes } from '@/lib/getSupportedDataTypes'
 import Intro from '@/ui/Intro'
 import Menu from '@/ui/Menu'
 import IntlMessageFormat from 'intl-messageformat'
+import QRCodeCanvas from './QRCodeCanvas'
+import Input from './_components/Input'
 
 export default async function QRCodePage({
   params,
@@ -18,13 +20,16 @@ export default async function QRCodePage({
 
   return (
     <>
-      <Intro messages={messages} />
+      <QRCodeCanvas>
+        <Input />
+      </QRCodeCanvas>
+      {/* <Intro messages={messages} />
       <p>
         {new IntlMessageFormat(messages.message, params.lang).format({
           numPhotos: 1000,
         })}
       </p>
-      <Menu types={types} />
+      <Menu types={types} /> */}
     </>
   )
 }
