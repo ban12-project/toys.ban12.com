@@ -1,6 +1,5 @@
 import { getDictionary } from '@/get-dictionary'
 import { Locale } from '@/i18n-config'
-import { getSupportedDataTypes } from '@/lib/getSupportedDataTypes'
 
 import Intro from '@/ui/Intro'
 import Menu from '@/ui/Menu'
@@ -13,10 +12,7 @@ type Props = {
 }
 
 export default async function QRCodePage({ params }: Props) {
-  const [types, messages] = await Promise.all([
-    getSupportedDataTypes(),
-    getDictionary(params.lang),
-  ])
+  const messages = await getDictionary(params.lang)
 
   return (
     <>
