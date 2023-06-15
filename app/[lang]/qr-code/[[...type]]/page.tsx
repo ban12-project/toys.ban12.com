@@ -8,11 +8,11 @@ import IntlMessageFormat from 'intl-messageformat'
 import QRCodeCanvas from './QRCodeCanvas'
 import Input from './_components/Input'
 
-export default async function QRCodePage({
-  params,
-}: {
+type Props = {
   params: { lang: Locale }
-}) {
+}
+
+export default async function QRCodePage({ params }: Props) {
   const [types, messages] = await Promise.all([
     getSupportedDataTypes(),
     getDictionary(params.lang),
@@ -32,4 +32,13 @@ export default async function QRCodePage({
       <Menu types={types} /> */}
     </>
   )
+}
+
+export async function generateMetadata({ params }: Props) {
+  const message = await getDictionary(params.lang)
+  
+  return {
+    title: 'Meet QR Code',
+    description: message.hello
+  }
 }
