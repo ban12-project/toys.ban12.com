@@ -1,18 +1,6 @@
 'use client'
 
-import {
-  Scene,
-  ArcRotateCamera,
-  Vector3,
-  HemisphericLight,
-  MeshBuilder,
-  Color4,
-  Mesh,
-  InstancedMesh,
-  StandardMaterial,
-  Color3,
-  VertexBuffer,
-} from '@babylonjs/core'
+import type { Scene, Mesh, InstancedMesh } from '@babylonjs/core'
 import SceneComponent, { useScene } from './_components/SceneComponent'
 import { useQRCode } from '@/hooks/useQRCode'
 import { useContext, useRef, useState } from 'react'
@@ -23,30 +11,30 @@ import { IN_BROWSER } from '@/lib/globals'
 let box: Mesh
 
 const onSceneReady = async (scene: Scene) => {
-  scene.clearColor = new Color4(0, 0, 0, 0)
+  scene.clearColor = new window.BABYLON.Color4(0, 0, 0, 0)
 
-  const camera = new ArcRotateCamera(
+  const camera = new window.BABYLON.ArcRotateCamera(
     'Camera',
     -Math.PI / 2,
     Math.PI / 2,
     12,
-    Vector3.Zero(),
+    window.BABYLON.Vector3.Zero(),
     scene,
   )
   camera.attachControl()
 
   // Create a basic light, aiming 0, 1, 0 - meaning, to the sky
-  const light = new HemisphericLight('light1', new Vector3(0, 1, 0), scene)
+  const light = new window.BABYLON.HemisphericLight('light1', new window.BABYLON.Vector3(0, 1, 0), scene)
 
   // Create a built-in "ground" shape;
-  const ground = MeshBuilder.CreateGround(
+  const ground = window.BABYLON.MeshBuilder.CreateGround(
     'ground1',
     { width: 100, height: 100, subdivisions: 2, updatable: false },
     scene,
   )
   ground.isVisible = false
 
-  box = MeshBuilder.CreateBox('box', { size: 1 }, scene)
+  box = window.BABYLON.MeshBuilder.CreateBox('box', { size: 1 }, scene)
   box.alwaysSelectAsActiveMesh = true
 }
 
@@ -102,7 +90,7 @@ function Boxes() {
     const x = -count / 2 + (index % count)
     const y = 1
     const z = -count / 2 + Math.floor(index / count)
-    return new Vector3(x, y, z)
+    return new window.BABYLON.Vector3(x, y, z)
   }
 
   useScene((scene) => {
@@ -111,8 +99,8 @@ function Boxes() {
       return
     }
 
-    const white = Color3.White()
-    const black = Color3.Black()
+    const white = window.BABYLON.Color3.White()
+    const black = window.BABYLON.Color3.Black()
 
     const colorData = new Float32Array(length * 4)
 
@@ -144,10 +132,10 @@ function Boxes() {
         })
     }
 
-    const buffer = new VertexBuffer(
+    const buffer = new window.BABYLON.VertexBuffer(
       scene.getEngine(),
       colorData,
-      VertexBuffer.ColorKind,
+      window.BABYLON.VertexBuffer.ColorKind,
       false,
       false,
       4,
@@ -156,9 +144,9 @@ function Boxes() {
     box.setVerticesBuffer(buffer)
     box.position = getPosition(0)
 
-    const material = new StandardMaterial('material')
+    const material = new window.BABYLON.StandardMaterial('material')
     material.disableLighting = true
-    material.emissiveColor = Color3.White()
+    material.emissiveColor = window.BABYLON.Color3.White()
     box.material = material
 
     return () => {

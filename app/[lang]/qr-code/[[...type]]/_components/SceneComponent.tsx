@@ -1,13 +1,20 @@
 import { useEffect, useRef, createContext, useContext, useState } from 'react'
-import {
+import type {
   Engine,
   EngineOptions,
-  WebGPUEngine,
   Scene,
   SceneOptions,
   WebGPUEngineOptions,
-  type Nullable,
+  Nullable,
 } from '@babylonjs/core'
+import Script from 'next/script'
+import { IN_BROWSER } from '@/lib/globals'
+
+declare global {
+  interface Window {
+    BABYLON: typeof import('@babylonjs/core')
+  }
+}
 
 // engine
 export type EngineCanvasContextType = {
@@ -69,13 +76,21 @@ async function createEngine(
     adaptToDeviceRatio,
   }: Pick<BabylonjsProps, 'antialias' | 'engineOptions' | 'adaptToDeviceRatio'>,
 ) {
-  const webGPUSupported = await WebGPUEngine.IsSupportedAsync
+  const webGPUSupported = await window.BABYLON.WebGPUEngine.IsSupportedAsync
   if (webGPUSupported) {
-    const engine = new WebGPUEngine(canvas, { ...engineOptions, antialias })
+    const engine = new window.BABYLON.WebGPUEngine(canvas, {
+      ...engineOptions,
+      antialias,
+    })
     await engine.initAsync()
     return engine
   }
-  return new Engine(canvas, antialias, engineOptions, adaptToDeviceRatio)
+  return new window.BABYLON.Engine(
+    canvas,
+    antialias,
+    engineOptions,
+    adaptToDeviceRatio,
+  )
 }
 
 export default function SceneComponent({
@@ -102,8 +117,12 @@ export default function SceneComponent({
     sceneReady: false,
   })
 
+  const [isReady, setIsReady] = useState(IN_BROWSER ? !!window.BABYLON : false)
+
   // set up basic engine and scene
   useEffect(() => {
+    if (!isReady) return
+
     const { current: canvas } = reactCanvas
 
     if (!canvas) return
@@ -123,7 +142,7 @@ export default function SceneComponent({
         canvas: reactCanvas.current,
       }))
 
-      const scene = new Scene(engine, sceneOptions)
+      const scene = new window.BABYLON.Scene(engine, sceneOptions)
       const sceneIsReady = scene.isReady()
       if (sceneIsReady) {
         onSceneReady(scene)
@@ -181,10 +200,18 @@ export default function SceneComponent({
     sceneOptions,
     onRender,
     onSceneReady,
+    isReady,
   ])
 
   return (
     <>
+      <Script
+        src="https://cdn.babylonjs.com/babylon.js"
+        onReady={() => {
+          setIsReady(true)
+        }}
+      />
+      {!isReady && <p>loading</p>}
       <canvas ref={reactCanvas} {...rest} />
       <EngineCanvasContext.Provider value={engineContext}>
         <SceneContext.Provider value={sceneContext}>
