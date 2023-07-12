@@ -20,20 +20,24 @@ export function useGsapContext<T = HTMLElement>(
   ) => void | (() => void),
   deps: DependencyList = [],
 ) {
-  /** create a ref for the root level element (for scoping) */
+  // create a ref for the root level element (for scoping)
   const wrapperRef = useRef<T | null>(null)
   const cleanup = useRef<void | (() => void)>()
 
   useIsomorphicLayoutEffect(() => {
+    // create our context. This function is invoked immediately and all GSAP animations and ScrollTriggers created during the execution of this function get recorded so we can revert() them later (cleanup)
     const ctx = gsap.context((ctx) => {
       cleanup.current = callback(ctx)
-    }, wrapperRef)
+    }, wrapperRef) // <- IMPORTANT! Scopes selector text
 
     return () => {
       ctx.revert()
-      if (typeof cleanup.current === 'function') cleanup.current()
+      if (typeof cleanup.current === 'function') {
+        cleanup.current()
+        cleanup.current = undefined
+      }
     }
-  }, deps)
+  }, deps) // <- empty dependency Array so it doesn't re-run on every render
 
   return wrapperRef
 }

@@ -7,9 +7,9 @@ export const i18n = {
     },
     'zh-CN': {
       lang: 'zh-CN',
-      label: '简体中文'
+      label: '简体中文',
     },
   },
 } as const
 
-export type Locale = keyof(typeof i18n)['locales']
+export type Locale = keyof (typeof i18n)['locales']

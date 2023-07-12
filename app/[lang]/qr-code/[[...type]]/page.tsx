@@ -32,9 +32,9 @@ export default async function QRCodePage({ params }: Props) {
 
 export async function generateMetadata({ params }: Props) {
   const message = await getDictionary(params.lang)
-  
+
   return {
     title: 'Meet QR Code',
-    description: message.hello
+    description: message.hello,
   }
 }

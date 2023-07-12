@@ -3,7 +3,7 @@
 import type { Scene, Mesh, InstancedMesh } from '@babylonjs/core'
 import SceneComponent, { useScene } from './_components/SceneComponent'
 import { useQRCode } from '@/hooks/useQRCode'
-import { useContext, useRef, useState } from 'react'
+import { useContext, useRef } from 'react'
 import { QRCodeContext, createQRCodeStore } from '@/lib/qrcodeStore'
 import { useStore } from 'zustand'
 import { IN_BROWSER } from '@/lib/globals'
@@ -24,7 +24,11 @@ const onSceneReady = async (scene: Scene) => {
   camera.attachControl()
 
   // Create a basic light, aiming 0, 1, 0 - meaning, to the sky
-  const light = new window.BABYLON.HemisphericLight('light1', new window.BABYLON.Vector3(0, 1, 0), scene)
+  const light = new window.BABYLON.HemisphericLight(
+    'light1',
+    new window.BABYLON.Vector3(0, 1, 0),
+    scene,
+  )
 
   // Create a built-in "ground" shape;
   const ground = window.BABYLON.MeshBuilder.CreateGround(
