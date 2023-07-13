@@ -4,8 +4,10 @@ import { Locale } from '@/i18n-config'
 import Intro from '@/ui/Intro'
 import Menu from '@/ui/Menu'
 import IntlMessageFormat from 'intl-messageformat'
-import QRCodeCanvas from './QRCodeCanvas'
 import Input from './_components/Input'
+import dynamic from 'next/dynamic'
+
+const QRCodeCanvas = dynamic(() => import('./QRCodeCanvas'), { ssr: false })
 
 type Props = {
   params: { lang: Locale }

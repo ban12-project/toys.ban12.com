@@ -1,4 +1,15 @@
-import { useEffect, useRef, createContext, useContext, useState } from 'react'
+import {
+  useEffect,
+  useRef,
+  createContext,
+  useContext,
+  useState,
+  PropsWithChildren,
+  use,
+  Suspense,
+  RefObject,
+  cache,
+} from 'react'
 import type {
   Engine,
   EngineOptions,
@@ -6,9 +17,9 @@ import type {
   SceneOptions,
   WebGPUEngineOptions,
   Nullable,
+  WebGPUEngine,
 } from '@babylonjs/core'
 import Script from 'next/script'
-import { IN_BROWSER } from '@/lib/globals'
 
 declare global {
   interface Window {
@@ -93,7 +104,12 @@ async function createEngine(
   )
 }
 
-export default function SceneComponent({
+const SCRIPT_READY_EVENT_NAME = 'babylonLoaderReady'
+const evt = new Event(SCRIPT_READY_EVENT_NAME)
+const et = new EventTarget()
+const CANVAS_READY_EVENT_NAME = 'canvasReady'
+
+export default function BabylonLoader({
   antialias,
   engineOptions,
   adaptToDeviceRatio,
@@ -105,7 +121,80 @@ export default function SceneComponent({
   ...rest
 }: BabylonjsProps & React.CanvasHTMLAttributes<HTMLCanvasElement>) {
   const reactCanvas = useRef<HTMLCanvasElement>(null)
-  const active = useRef(false)
+
+  return (
+    <>
+      <Script
+        src="https://cdn.babylonjs.com/babylon.js"
+        onReady={() => {
+          et.dispatchEvent(evt)
+        }}
+      />
+      <canvas ref={reactCanvas} {...rest} />
+      <Suspense fallback={<p>loading</p>}>
+        <SceneComponent
+          {...{
+            antialias,
+            engineOptions,
+            adaptToDeviceRatio,
+            sceneOptions,
+            onRender,
+            onSceneReady,
+            renderChildrenWhenReady,
+            children,
+            reactCanvas,
+          }}
+        />
+      </Suspense>
+    </>
+  )
+}
+
+const loadBabylon = cache(async () => {
+  return new Promise<void>((resolve) => {
+    if (!!window.BABYLON) resolve()
+
+    et.addEventListener(SCRIPT_READY_EVENT_NAME, () => {
+      resolve()
+    })
+  })
+})
+
+const getEngine = cache(
+  async (
+    canvas: HTMLCanvasElement,
+    antialias: BabylonjsProps['antialias'],
+    engineOptions: BabylonjsProps['engineOptions'],
+    adaptToDeviceRatio: BabylonjsProps['adaptToDeviceRatio'],
+  ) => {
+    return await createEngine(canvas!, {
+      antialias,
+      engineOptions,
+      adaptToDeviceRatio,
+    })
+  },
+)
+
+function SceneComponent({
+  antialias,
+  engineOptions,
+  adaptToDeviceRatio,
+  sceneOptions,
+  onRender,
+  onSceneReady,
+  renderChildrenWhenReady,
+  children,
+  reactCanvas,
+}: PropsWithChildren<
+  BabylonjsProps & { reactCanvas: RefObject<HTMLCanvasElement | null> }
+>) {
+  const { current: canvas } = reactCanvas
+
+  use(loadBabylon())
+
+  const engine = use(
+    getEngine(canvas!, antialias, engineOptions, adaptToDeviceRatio),
+  )
 
   const [engineContext, setEngineContext] = useState<EngineCanvasContextType>({
     engine: null,
@@ -117,109 +206,70 @@ export default function SceneComponent({
     sceneReady: false,
   })
 
-  const [isReady, setIsReady] = useState(IN_BROWSER ? !!window.BABYLON : false)
+  const active = useRef(false)
 
   // set up basic engine and scene
   useEffect(() => {
-    if (!isReady) return
-
-    const { current: canvas } = reactCanvas
-
-    if (!canvas) return
     if (active.current) return
     active.current = true
 
-    const cleanupCallbacks: (() => void)[] = []
+    setEngineContext(() => ({
+      engine,
+      canvas,
+    }))
 
-    ;(async () => {
-      const engine = await createEngine(canvas, {
-        antialias,
-        engineOptions,
-        adaptToDeviceRatio,
-      })
-      setEngineContext(() => ({
-        engine,
-        canvas: reactCanvas.current,
-      }))
-
-      const scene = new window.BABYLON.Scene(engine, sceneOptions)
-      const sceneIsReady = scene.isReady()
-      if (sceneIsReady) {
+    const scene = new window.BABYLON.Scene(engine, sceneOptions)
+    const sceneIsReady = scene.isReady()
+    if (sceneIsReady) {
+      onSceneReady(scene)
+    } else {
+      scene.onReadyObservable.addOnce((scene) => {
         onSceneReady(scene)
-      } else {
-        scene.onReadyObservable.addOnce((scene) => {
-          onSceneReady(scene)
-          setSceneContext(() => ({
-            canvas: reactCanvas.current,
-            scene,
-            engine,
-            sceneReady: true,
-          }))
-        })
-      }
-
-      engine.runRenderLoop(() => {
-        if (typeof onRender === 'function') onRender(scene)
-        scene.render()
+        setSceneContext(() => ({
+          canvas,
+          scene,
+          engine,
+          sceneReady: true,
+        }))
       })
+    }
 
-      const resize = () => {
-        scene.getEngine().resize()
-      }
+    engine.runRenderLoop(() => {
+      if (typeof onRender === 'function') onRender(scene)
+      scene.render()
+    })
 
-      if (window) {
-        window.addEventListener('resize', resize)
-      }
+    const resize = () => {
+      scene.getEngine().resize()
+    }
 
-      setSceneContext(() => ({
-        canvas: reactCanvas.current,
-        scene,
-        engine,
-        sceneReady: sceneIsReady,
-      }))
+    if (window) {
+      window.addEventListener('resize', resize)
+    }
 
-      cleanupCallbacks.push(() => {
-        scene.getEngine().dispose()
-
-        if (window) {
-          window.removeEventListener('resize', resize)
-        }
-      })
-    })()
+    setSceneContext(() => ({
+      canvas,
+      scene,
+      engine,
+      sceneReady: sceneIsReady,
+    }))
 
     return () => {
-      let cb
-      while ((cb = cleanupCallbacks.shift())) {
-        cb()
+      scene.getEngine().dispose()
+
+      if (window) {
+        window.removeEventListener('resize', resize)
       }
     }
-  }, [
-    antialias,
-    engineOptions,
-    adaptToDeviceRatio,
-    sceneOptions,
-    onRender,
-    onSceneReady,
-    isReady,
-  ])
+  }, [canvas, engine, onRender, onSceneReady, sceneOptions])
 
   return (
-    <>
-      <Script
-        src="https://cdn.babylonjs.com/babylon.js"
-        onReady={() => {
-          setIsReady(true)
-        }}
-      />
-      {!isReady && <p>loading</p>}
-      <canvas ref={reactCanvas} {...rest} />
-      <EngineCanvasContext.Provider value={engineContext}>
-        <SceneContext.Provider value={sceneContext}>
-          {(renderChildrenWhenReady !== true ||
-            (renderChildrenWhenReady === true && sceneContext.sceneReady)) &&
-            children}
-        </SceneContext.Provider>
-      </EngineCanvasContext.Provider>
-    </>
+    <EngineCanvasContext.Provider value={engineContext}>
+      <SceneContext.Provider value={sceneContext}>
+        {(renderChildrenWhenReady !== true ||
+          (renderChildrenWhenReady === true && sceneContext.sceneReady)) &&
+          children}
+      </SceneContext.Provider>
+    </EngineCanvasContext.Provider>
   )
 }

@@ -6,7 +6,6 @@ import { useQRCode } from '@/hooks/useQRCode'
 import { useContext, useRef } from 'react'
 import { QRCodeContext, createQRCodeStore } from '@/lib/qrcodeStore'
 import { useStore } from 'zustand'
-import { IN_BROWSER } from '@/lib/globals'
 
 let box: Mesh
 
@@ -56,7 +55,7 @@ export default function QRCodeCanvas({
 }) {
   const store = useRef(
     createQRCodeStore({
-      data: IN_BROWSER ? window.location.origin : '',
+      data: window.location.origin,
     }),
   ).current
 
